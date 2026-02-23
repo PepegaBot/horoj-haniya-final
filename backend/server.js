@@ -6,10 +6,12 @@ const cors = require('cors');
 const app = express();
 app.use(cors());
 
+const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:3000";
+
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: "*", // In production, restrict this to your frontend's URL
+    origin: [FRONTEND_URL, "http://localhost:3000"], // Allow both production and local dev
     methods: ["GET", "POST"]
   }
 });

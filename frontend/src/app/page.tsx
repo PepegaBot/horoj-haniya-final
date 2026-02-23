@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 // --- 1. CONFIGURATION ---
 const TENOR_API_KEY = process.env.NEXT_PUBLIC_TENOR_API_KEY || "GET_YOUR_OWN_API_KEY"; // IMPORTANT: Use .env.local
-const SOCKET_URL = "http://localhost:3001"; // This will be mapped by Discord
+const SOCKET_URL = process.env.NEXT_PUBLIC_SOCKET_URL || "http://localhost:3001"; // This will be mapped by Discord
 const ADMIN_DISCORD_ID = "217998454197190656";
 
 // --- 2. LOCALIZATION (i18n) ---
