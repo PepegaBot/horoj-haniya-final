@@ -6,7 +6,7 @@ import { io, Socket } from 'socket.io-client';
 import { motion, AnimatePresence } from 'framer-motion';
 
 // --- 1. CONFIGURATION ---
-const TENOR_API_KEY = process.env.NEXT_PUBLIC_TENOR_API_KEY || "GET_YOUR_OWN_API_KEY"; // IMPORTANT: Use .env.local
+const KLIPY_API_KEY = process.env.NEXT_PUBLIC_KLIPY_API_KEY || "GET_YOUR_OWN_API_KEY"; // IMPORTANT: Use .env.local
 const SOCKET_URL = process.env.NEXT_PUBLIC_SOCKET_URL || "http://localhost:3001"; // This will be mapped by Discord
 const ADMIN_DISCORD_ID = "217998454197190656";
 
@@ -31,7 +31,7 @@ const translations = {
         // Other
         you: "You",
         waitingForPlayers: "Waiting for players...",
-        searchTenor: "Search Tenor GIFs...",
+        searchKlipy: "Search Klipy GIFs...",
         submitted: "Submitted!",
         voted: "Voted!",
     },
@@ -54,7 +54,7 @@ const translations = {
         // Other
         you: "أنت",
         waitingForPlayers: "في انتظار اللاعبين...",
-        searchTenor: "ابحث في Tenor...",
+        searchKlipy: "ابحث في Klipy...",
         submitted: "تم الإرسال!",
         voted: "تم التصويت!",
     },
@@ -362,14 +362,16 @@ function GifSearcher() {
     const searchGifs = async (e) => {
         e.preventDefault();
         if (!query) return;
-        const url = `https://tenor.googleapis.com/v2/search?q=${encodeURIComponent(query)}&key=${TENOR_API_KEY}&limit=12`;
+        // Updated for Klipy API
+        const url = `https://api.klipy.com/v1/gifs/search?q=${encodeURIComponent(query)}&apikey=${KLIPY_API_KEY}&limit=12`;
         const response = await fetch(url);
         const data = await response.json();
-        setResults(data.results || []);
+        setResults(data.data || []); // Klipy nests results in a 'data' property
     };
     
-    const selectGif = (gifUrl) => {
-        socket.emit('player_submit_gif', gifUrl);
+    const selectGif = (gif) => {
+        // Klipy has a different structure for URLs
+        socket.emit('player_submit_gif', gif.url);
         setSubmitted(true);
     };
 
@@ -384,14 +386,15 @@ function GifSearcher() {
                     type="text"
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
-                    placeholder={t.searchTenor}
+                    placeholder={t.searchKlipy}
                     className="w-full p-3 text-xl rounded bg-dark-bg/80 border-2 border-brand-purple focus:border-brand-pink outline-none"
                 />
             </form>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-4 max-h-[50vh] overflow-y-auto">
                 {results.map(gif => (
-                    <div key={gif.id} onClick={() => selectGif(gif.media_formats.gif.url)} className="aspect-square cursor-pointer hover:scale-105 transition-transform">
-                        <img src={gif.media_formats.tinygif.url} alt={gif.content_description} className="w-full h-full object-cover rounded"/>
+                    <div key={gif.id} onClick={() => selectGif(gif)} className="aspect-square cursor-pointer hover:scale-105 transition-transform">
+                        {/* Use the appropriate preview image from Klipy's response */}
+                        <img src={gif.images.fixed_width.url} alt={gif.title} className="w-full h-full object-cover rounded"/>
                     </div>
                 ))}
             </div>
