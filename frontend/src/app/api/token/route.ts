@@ -1,14 +1,18 @@
 import { NextResponse } from 'next/server';
 
-const CLIENT_ID = process.env.NEXT_PUBLIC_DISCORD_CLIENT_ID;
-const CLIENT_SECRET = process.env.DISCORD_CLIENT_SECRET;
-
-if (!CLIENT_ID || !CLIENT_SECRET) {
-    throw new Error("Missing Discord application credentials. Please check your .env.local file.");
-}
-
 export async function POST(req: Request) {
   const { code } = await req.json();
+
+  const CLIENT_ID = process.env.NEXT_PUBLIC_DISCORD_CLIENT_ID;
+  const CLIENT_SECRET = process.env.DISCORD_CLIENT_SECRET;
+
+  // By checking for the variables inside the handler, TypeScript can infer
+  // that they are strings for the rest of the function's scope.
+  if (!CLIENT_ID || !CLIENT_SECRET) {
+    console.error("Missing Discord application credentials on the server.");
+    // Return a generic error to the client for security
+    return NextResponse.json({ error: "Server configuration error." }, { status: 500 });
+  }
 
   if (!code) {
     return NextResponse.json({ error: 'Code is missing' }, { status: 400 });
