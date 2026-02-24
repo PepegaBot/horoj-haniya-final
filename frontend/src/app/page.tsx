@@ -10,7 +10,7 @@ const KLIPY_API_KEY = process.env.NEXT_PUBLIC_KLIPY_API_KEY || "GET_YOUR_OWN_API
 const SOCKET_URL = process.env.NEXT_PUBLIC_SOCKET_URL || "http://localhost:3001"; // This will be mapped by Discord
 const ADMIN_DISCORD_ID = "217998454197190656";
 
-// --- 2. LOCALIZATION (i18n) ---
+// --- 3. TYPES & LOCALIZATION ---
 const translations = {
     en: {
         // UI
@@ -60,8 +60,34 @@ const translations = {
     },
 };
 
-// --- 3. AUDIO HOOK PLACEHOLDER ---
-const useGameAudio = (roomState) => {
+interface Player {
+  discordId: string;
+  username: string;
+  score: number;
+  isAdmin: boolean;
+  isReady?: boolean;
+}
+
+interface RoomState {
+  phase: 'LOBBY' | 'PROMPT_REVEAL' | 'GIF_SEARCH' | 'VOTING' | 'ROUND_RESULTS';
+  players: Record<string, Player>;
+  promptDeck: 'DEFAULT' | 'CUSTOM' | 'MIXED';
+  customPrompts: { en: string[], ar: string[] };
+  currentPrompt: { en: string, ar: string };
+  submissions: Record<string, string>;
+  votes: Record<string, string>;
+  roundWinner: {
+    socketId: string;
+    username: string;
+    gifUrl: string;
+    votes: number;
+  } | null;
+  timer: number | null;
+}
+
+
+// --- 4. AUDIO HOOK PLACEHOLDER ---
+const useGameAudio = (roomState: RoomState | null) => {
     useEffect(() => {
         const phase = roomState?.phase;
         console.log(`AudioEngine: Phase changed to ${phase}`);
@@ -101,7 +127,7 @@ const useGameAudio = (roomState) => {
 };
 
 
-// --- 4. DISCORD & SOCKET SETUP ---
+// --- 5. DISCORD & SOCKET SETUP ---
 let discordSdk;
 if (typeof window !== 'undefined') {
     discordSdk = new DiscordSDK(process.env.NEXT_PUBLIC_DISCORD_CLIENT_ID || "");
@@ -109,11 +135,11 @@ if (typeof window !== 'undefined') {
 
 let socket;
 
-// --- 5. MAIN GAME COMPONENT ---
+// --- 6. MAIN GAME COMPONENT ---
 export default function Home() {
     const [lang, setLang] = useState('en');
     const [auth, setAuth] = useState(null);
-    const [roomState, setRoomState] = useState(null);
+    const [roomState, setRoomState] = useState<RoomState | null>(null);
     const [socketId, setSocketId] = useState(null);
 
     const t = useMemo(() => translations[lang], [lang]);
