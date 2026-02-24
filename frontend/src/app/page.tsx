@@ -11,6 +11,8 @@ const SOCKET_URL = process.env.NEXT_PUBLIC_SOCKET_URL || "http://localhost:3001"
 const ADMIN_DISCORD_ID = "217998454197190656";
 
 // --- 3. TYPES & LOCALIZATION ---
+type Language = 'en' | 'ar';
+
 const translations = {
     en: {
         // UI
@@ -137,7 +139,7 @@ let socket: Socket;
 
 // --- 6. MAIN GAME COMPONENT ---
 export default function Home() {
-    const [lang, setLang] = useState('en');
+    const [lang, setLang] = useState<Language>('en');
     const [auth, setAuth] = useState(null);
     const [roomState, setRoomState] = useState<RoomState | null>(null);
     const [socketId, setSocketId] = useState(null);
@@ -219,7 +221,7 @@ export default function Home() {
         <div className="w-full max-w-4xl mx-auto p-8">
             <h1 className="text-5xl font-bold text-center mb-8 text-brand-pink tracking-wider animate-fade-in">{t.lobby}</h1>
             
-            {isAdmin && <AdminDashboard />}
+            {isAdmin && <AdminDashboard lang={lang} />}
 
             <div className="mt-8 bg-dark-bg/50 p-6 rounded-lg shadow-lg">
                 <h2 className="text-3xl font-semibold mb-4 text-brand-blue">{t.players}</h2>
@@ -247,7 +249,7 @@ export default function Home() {
         <div className="w-full max-w-3xl mx-auto animate-fade-in">
             <p className="text-center text-xl mb-2 text-brand-blue">{t.gifSearch}</p>
             <h2 className="text-center text-3xl font-bold mb-6">{roomState.currentPrompt[lang]}</h2>
-            <GifSearcher />
+            <GifSearcher lang={lang} />
             <div className="absolute bottom-10 left-1/2 -translate-x-1/2 text-6xl font-bold text-brand-pink animate-ticking">{roomState.timer}</div>
         </div>
     );
@@ -309,7 +311,7 @@ export default function Home() {
         <main className="min-h-screen w-full flex flex-col items-center justify-center p-4 relative font-sans">
             {/* Language Toggle */}
             <div className="absolute top-4 end-4">
-                <select onChange={(e) => setLang(e.target.value)} value={lang} className="bg-brand-purple/50 border-none rounded p-2">
+                <select onChange={(e) => setLang(e.target.value as Language)} value={lang} className="bg-brand-purple/50 border-none rounded p-2">
                     <option value="en">English</option>
                     <option value="ar">العربية</option>
                 </select>
@@ -332,18 +334,18 @@ export default function Home() {
 }
 
 
-// --- 6. HELPER COMPONENTS ---
+// --- 7. HELPER COMPONENTS ---
 
-function AdminDashboard() {
+function AdminDashboard({ lang }: { lang: Language }) {
     const [newPromptEn, setNewPromptEn] = useState('');
     const [newPromptAr, setNewPromptAr] = useState('');
-    const t = useMemo(() => translations[document.documentElement.lang || 'en'], [document.documentElement.lang]);
+    const t = useMemo(() => translations[lang], [lang]);
 
-    const handleSetDeck = (deck) => {
+    const handleSetDeck = (deck: 'DEFAULT' | 'CUSTOM' | 'MIXED') => {
         socket?.emit('admin_set_deck', deck);
     };
     
-    const handleAddPrompt = (e) => {
+    const handleAddPrompt = (e: React.FormEvent) => {
         e.preventDefault();
         if (newPromptEn && newPromptAr) {
             socket?.emit('admin_add_custom_prompt', { en: newPromptEn, ar: newPromptAr });
@@ -356,9 +358,9 @@ function AdminDashboard() {
         <div className="bg-brand-purple/20 p-4 rounded-lg shadow-md mt-4">
             <h3 className="text-xl font-bold mb-3">{t.promptDeck}</h3>
             <div className="flex gap-2 mb-4">
-                {['DEFAULT', 'CUSTOM', 'MIXED'].map(deck => (
-                    <button key={deck} onClick={() => handleSetDeck(deck)} className="px-4 py-2 rounded bg-brand-blue/80 hover:bg-brand-blue transition-colors">
-                        {t[deck.toLowerCase()]}
+                {(['default', 'custom', 'mixed'] as const).map(deck => (
+                    <button key={deck} onClick={() => handleSetDeck(deck.toUpperCase() as 'DEFAULT' | 'CUSTOM' | 'MIXED')} className="px-4 py-2 rounded bg-brand-blue/80 hover:bg-brand-blue transition-colors">
+                        {t[deck]}
                     </button>
                 ))}
             </div>
@@ -378,14 +380,14 @@ function AdminDashboard() {
     );
 }
 
-function GifSearcher() {
+function GifSearcher({ lang }: { lang: Language }) {
     const [query, setQuery] = useState('');
-    const [results, setResults] = useState([]);
+    const [results, setResults] = useState<any[]>([]);
     const [submitted, setSubmitted] = useState(false);
-    const t = useMemo(() => translations[document.documentElement.lang || 'en'], [document.documentElement.lang]);
+    const t = useMemo(() => translations[lang], [lang]);
 
 
-    const searchGifs = async (e) => {
+    const searchGifs = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!query) return;
         // Updated for Klipy API
@@ -395,7 +397,7 @@ function GifSearcher() {
         setResults(data.data || []); // Klipy nests results in a 'data' property
     };
     
-    const selectGif = (gif) => {
+    const selectGif = (gif: any) => {
         // Klipy has a different structure for URLs
         socket.emit('player_submit_gif', gif.url);
         setSubmitted(true);
