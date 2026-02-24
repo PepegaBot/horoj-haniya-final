@@ -128,12 +128,12 @@ const useGameAudio = (roomState: RoomState | null) => {
 
 
 // --- 5. DISCORD & SOCKET SETUP ---
-let discordSdk;
+let discordSdk: DiscordSDK;
 if (typeof window !== 'undefined') {
     discordSdk = new DiscordSDK(process.env.NEXT_PUBLIC_DISCORD_CLIENT_ID || "");
 }
 
-let socket;
+let socket: Socket;
 
 // --- 6. MAIN GAME COMPONENT ---
 export default function Home() {
